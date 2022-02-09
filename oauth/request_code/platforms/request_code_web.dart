@@ -15,7 +15,6 @@ class RequestCodeWeb extends RequestCode {
   bool _signonInProcess = false;
   late AuthorizationRequest _authorizationRequest;
   html.WindowBase? _popupWin;
-  static Exception _ex = Exception("Access denied or authentation canceled.");
   var _onCodeStream;
 
   RequestCodeWeb(Config config) {
@@ -45,7 +44,7 @@ class RequestCodeWeb extends RequestCode {
       }
       if (event.data.toString().contains("error")) {
         _closeWebWindow();
-        throw _ex;
+        throw RequestCode.ex;
       }
     });
 
@@ -53,7 +52,8 @@ class RequestCodeWeb extends RequestCode {
     _popupWin = html.window.open(
         initialURL, "Microsoft Auth", "width=600,height=600,top=100,left=100");
     _popupStatusStream(_popupWin).listen((isClosed) {
-      if (isClosed! && _signonInProcess) _onCodeListener.addError(_ex);
+      if (isClosed! && _signonInProcess)
+        _onCodeListener.addError(RequestCode.ex);
     });
   }
 
@@ -76,7 +76,7 @@ class RequestCodeWeb extends RequestCode {
 
     if (uri.queryParameters["error"] != null) {
       _closeWebWindow();
-      _onCodeListener.addError(_ex);
+      _onCodeListener.addError(RequestCode.ex);
     }
 
     var token = uri.queryParameters;
