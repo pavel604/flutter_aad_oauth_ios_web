@@ -2,7 +2,7 @@
 
 This library is a merger of [flutter_aad_oauth](https://pub.dev/packages/flutter_aad_oauth) and [aad_oauth](https://pub.dev/packages/aad_oauth) plugins on pub.dev. 
 
-*It does not require BuildContext or GlobalKey to work!*
+**It does not require BuildContext or GlobalKey to work!**
 
 It's been refactored to exclude additional depenedencies, such as [universal_html](https://pub.dev/packages/universal_html) and [keyboard_actions](https://pub.dev/packages/keyboard_actions), and is using only what comes with Flutter. 
 
