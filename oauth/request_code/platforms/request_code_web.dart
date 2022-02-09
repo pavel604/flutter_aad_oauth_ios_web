@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 import '../../request_code/request_code.dart';
 import '../../model/config.dart';
 import 'dart:html' as html;
@@ -10,13 +11,14 @@ RequestCode getRequestCode(cf) => RequestCodeWeb(cf);
 class RequestCodeWeb extends RequestCode {
   final StreamController<Map<String, String>> _onCodeListener =
       new StreamController();
-  final Config _config;
+
+  bool _signonInProcess = false;
   late AuthorizationRequest _authorizationRequest;
   html.WindowBase? _popupWin;
-
+  static Exception _ex = Exception("Access denied or authentation canceled.");
   var _onCodeStream;
 
-  RequestCodeWeb(Config config) : _config = config {
+  RequestCodeWeb(Config config) {
     _authorizationRequest = AuthorizationRequest(config);
   }
 
@@ -26,30 +28,46 @@ class RequestCodeWeb extends RequestCode {
 
     String initialURL =
         ("${_authorizationRequest.url}?$urlParams").replaceAll(" ", "%20");
-    try {
-      _webAuth(initialURL);
-    } on Exception catch (e) {
-      return Future.error(e);
-    }
+
+    _webAuth(initialURL);
 
     var jsonToken = await _onCode.first;
     token = Token.fromJson(jsonToken);
     return token;
   }
 
-  _webAuth(String initialURL) {
+  void _webAuth(String initialURL) {
     html.window.onMessage.listen((event) {
+      log("Event data: ${event.data}");
       var tokenParm = 'access_token';
       if (event.data.toString().contains(tokenParm)) {
         _geturlData(event.data.toString());
       }
       if (event.data.toString().contains("error")) {
         _closeWebWindow();
-        throw Exception("Access denied or authentation canceled.");
+        throw _ex;
       }
     });
+
+    _signonInProcess = true;
     _popupWin = html.window.open(
         initialURL, "Microsoft Auth", "width=600,height=600,top=100,left=100");
+    _popupStatusStream(_popupWin).listen((isClosed) {
+      if (isClosed! && _signonInProcess) _onCodeListener.addError(_ex);
+    });
+  }
+
+  Stream<bool?> _popupStatusStream(html.WindowBase? popup) async* {
+    bool? status, isClosed;
+    while (true) {
+      status = popup?.closed;
+      if (isClosed != status) {
+        isClosed = status;
+        yield isClosed;
+        if (isClosed!) break;
+      }
+      await Future.delayed(Duration(milliseconds: 50));
+    }
   }
 
   _geturlData(String _url) {
@@ -58,8 +76,7 @@ class RequestCodeWeb extends RequestCode {
 
     if (uri.queryParameters["error"] != null) {
       _closeWebWindow();
-      _onCodeListener
-          .addError(Exception("Access denied or authentation canceled."));
+      _onCodeListener.addError(_ex);
     }
 
     var token = uri.queryParameters;
@@ -69,6 +86,7 @@ class RequestCodeWeb extends RequestCode {
   }
 
   _closeWebWindow() {
+    _signonInProcess = false;
     if (_popupWin != null) {
       _popupWin?.close();
       _popupWin = null;
