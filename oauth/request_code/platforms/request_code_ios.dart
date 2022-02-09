@@ -34,12 +34,13 @@ class RequestCodeIos extends RequestCode {
       userAgent: _config.userAgent,
     );
 
-    _webView.onUrlChanged.listen((String url) {
-      var uri = Uri.parse(url);
+    _webView.onUrlChanged.listen((String? url) {
+      var uri = Uri.parse(url ?? '');
 
       if (uri.queryParameters['error'] != null) {
+        _onCodeListener.addError(RequestCode.ex);
         _webView.close();
-        _onCodeListener.add(null);
+        //_onCodeListener.add(null);
       }
 
       if (uri.queryParameters['code'] != null) {
