@@ -5,6 +5,8 @@ import 'platforms/request_code_unsupported.dart'
     if (dart.library.js) 'platforms/request_code_web.dart';
 
 abstract class RequestCode {
+  static Exception get ex =>
+      Exception("Access denied or authentation canceled.");
   static RequestCode getInstance(Config cf) {
     return getRequestCode(cf);
   }
