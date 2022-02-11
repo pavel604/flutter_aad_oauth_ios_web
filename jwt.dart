@@ -1,5 +1,3 @@
-library jwt_decode;
-
 import 'dart:convert';
 
 class Jwt {
