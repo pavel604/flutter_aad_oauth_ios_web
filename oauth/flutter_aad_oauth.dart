@@ -135,7 +135,7 @@ class FlutterAadOauth {
         //do nothing (because later we try to do a full oauth code flow request)
       }
     } else {
-      _performFullAuthFlow();
+      await _performFullAuthFlow();
     }
   }
 
